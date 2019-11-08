@@ -26,6 +26,7 @@ app.get('/location', locationHandler);
 app.get('/weather', weatherHandler);
 app.get('/yelp', yelpHandler);
 app.get('/trails', trailHandler);
+app.get('/movies', movieHandler);
 app.use('*', notFoundHandler);
 app.use(errorHandler);
 
@@ -107,7 +108,7 @@ function weatherHandler(request, response) {
 }
 
 function trailHandler(request, response) {
-  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API}`
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.TRAILSAPI}`
   if (locations[url]) {
     response.send(locations[url]);
   }
@@ -123,6 +124,38 @@ function trailHandler(request, response) {
         errorHandler('So sorry, something went wrong.', request, response);
       });
   }
+}
+
+
+function movieHandler(request, response) {
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIESAPI}&language=en-US&query=forks&page=1&include_adult=false`
+
+  if (locations[url]) {
+    response.send(locations[url]);
+  }
+  else {
+    superagent.get(url)
+      .then(data => {
+        const allMovies = data.body.movies.map(movies => {
+          return new Movies(movies)
+        })
+        response.status(200).json(allMovies)
+      })
+      .catch(() => {
+        errorHandler('So sorry, something went wrong.', request, response);
+      });
+  }
+
+}
+
+function Movies(movies) {
+  this.title = movies.title;
+  this.overview = movies.overview;
+  this.average_votes = movies.average_votes;
+  this.total_votes = movies.total_votes;
+  this.image_url = movies.image_url;
+  this.popularity = movies.popularity;
+  this.released_on = movies.released_on;
 }
 
 function notFoundHandler(request, response) {
